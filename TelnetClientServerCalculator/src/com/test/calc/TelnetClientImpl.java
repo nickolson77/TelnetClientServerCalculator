@@ -39,15 +39,15 @@ import com.test.calc.IOUtil;
 public final class TelnetClientImpl
 {
 
-    public static final void main(String[] args)
-    {
+    public static final void main(String[] args){
+    	
         TelnetClient telnet;
 
         telnet = new TelnetClient();
 
         try
         {
-            telnet.connect("telehack.com", 23);
+            telnet.connect("localhost", 23);
         }
         catch (IOException e)
         {
