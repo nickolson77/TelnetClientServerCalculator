@@ -8,8 +8,12 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 
 import javax.swing.JFrame;
@@ -19,41 +23,36 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-public class ClientLauncher {
+import org.apache.commons.net.telnet.TelnetClient;
 
-	String appName = "Simple Telnet Client";
-	JFrame frame = new JFrame(appName);
+public class ClientLauncher extends JFrame implements ActionListener {
+
+	
 	JTextField textField;
 	JTextArea textArea;
 	JFrame preFrame;
+	JPanel mainPanel;
+	JPanel southPanel;
+	PrintWriter inWriter;
 
-	public void display() {
-		JPanel mainPanel = new JPanel();
+	public ClientLauncher() {
+		
+		super("Telnet Client");
+		mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());
 
-		JPanel southPanel = new JPanel();
+		southPanel = new JPanel();
 		southPanel.setLayout(new GridBagLayout());
 
 		textField = new JTextField(30);
 		textField.requestFocusInWindow();
-		textField.addActionListener(new TextFieldListener());
-		
-		//System.setIn(in);
-		
-
+		textField.addActionListener(this);
+			
 		textArea = new JTextArea();
 		textArea.setEditable(false);
 		textArea.setFont(new Font("Serif", Font.PLAIN, 15));
 		textArea.setLineWrap(true);
-		
-		
-		
-		//redirect System.out to textArea
-		PrintStream out = new PrintStream(new TextAreaOutStream(textArea));
-		System.setOut( out );
-		//System.setErr( out );
-
-	
+			
 		mainPanel.add(new JScrollPane(textArea), BorderLayout.CENTER);
 
 		GridBagConstraints left = new GridBagConstraints();
@@ -73,39 +72,73 @@ public class ClientLauncher {
 
 		mainPanel.add(BorderLayout.SOUTH, southPanel);
 
-		frame.add(mainPanel);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(470, 300);
-		frame.setVisible(true);
+		this.add(mainPanel);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setSize(470, 300);
+		this.setVisible(true);
+		
+		redirectIO(textArea); 
+		connectTelnet();
 	}
 
-	class TextFieldListener implements ActionListener {
+	public void connectTelnet() {
 		
-		public void actionPerformed(ActionEvent event) {
-			
-			if (textField.getText().length() > 1) {
-				
-				textArea.append(textField.getText() + "\n");
-				textField.setText("");
-				textField.requestFocusInWindow();
-				/*try {
-					InputStream textFieldInStream = new ByteArrayInputStream(textField.getText().getBytes("UTF-8"));
-					System.setIn(textFieldInStream);
-				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}*/
-			}
+		TelnetClient telnet = new TelnetClient();
+
+		try {
+			telnet.connect("localhost", 23);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		IOUtil.readWrite(telnet.getInputStream(), telnet.getOutputStream(), System.in, System.out);
+
+		try {
+			telnet.disconnect();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		System.exit(0);
+	}
+
+	public void redirectIO(JTextArea text) {
+		
+		PrintStream textAreaOut = new PrintStream(new TextAreaOutStream(text));
+		PipedInputStream inPipe = new PipedInputStream();
+		
+		System.setOut(textAreaOut);
+		System.setIn(inPipe);
+		try {
+			inWriter = new PrintWriter(new PipedOutputStream(inPipe), true);
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 	}
 	
-	public static void main(String[] args) {
-			
-		ClientLauncher clientView = new ClientLauncher();
-		clientView.display();
+	@Override
+	public void actionPerformed(ActionEvent e) {
 		
-		new TelnetClientImpl("localhost", 23);
-			
-		}
-
+		String msq = textField.getText();
+		textArea.append(msq + "\n");
+		textField.setText("");
+		inWriter.println(msq); 
+		
+	}
+	
+	public static void main(String[] args) {			
+		
+		ClientLauncher clientView = new ClientLauncher();		
+		
+		/*java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new ClientLauncher();
+            }
+        });  */
+   }
 }
+
+
+

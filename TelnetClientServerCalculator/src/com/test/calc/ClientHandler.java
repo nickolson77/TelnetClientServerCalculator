@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.mariuszgromada.math.mxparser.Expression;
+
 
 public class ClientHandler implements Runnable {
     
@@ -25,15 +27,18 @@ public class ClientHandler implements Runnable {
             final BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             final PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             
-            // display welcome screen
-            out.println("You are connected to Server");
-            out.flush();
+            out.println("You are connected to Math Telnet Server.");
+            out.println("Type math expression and press enter, e. g. 2+2*5");
             
-            boolean cancel = false;
-            while(!cancel){
+            while(true){
                 final String command = reader.readLine();
-                out.println(CalculatorImpl.calculate(command));
-            }
+                if (command.equalsIgnoreCase("exit")) {
+					break;
+				}
+                else{
+                	out.println(calculate(command));
+                }
+             }
             
         } catch (IOException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
@@ -46,4 +51,16 @@ public class ClientHandler implements Runnable {
             }
         }
     }
+    
+    public static String calculate(String expression){
+        
+    	Expression exp = new Expression (expression);
+		if(!exp.checkSyntax()){
+		     return exp.getErrorMessage();
+		 }
+		 else{
+		     return "" + exp.calculate();
+		 }
+        
+     }
 }

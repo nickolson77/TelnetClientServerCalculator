@@ -7,8 +7,6 @@ import javax.swing.JTextArea;
 /**
  * An output stream that writes its output to a javax.swing.JTextArea control.
  * 
- * @author Ranganath Kini
- * @see javax.swing.JTextArea
  */
 public class TextAreaOutStream extends OutputStream {
 
