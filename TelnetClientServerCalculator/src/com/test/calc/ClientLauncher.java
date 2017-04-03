@@ -34,10 +34,14 @@ public class ClientLauncher extends JFrame implements ActionListener {
 	JPanel mainPanel;
 	JPanel southPanel;
 	PrintWriter inWriter;
+	String host;
+	int port;
 
-	public ClientLauncher() {
+	public ClientLauncher(String hst, int prt) {
 		
 		super("Telnet Client");
+		this.host = hst;
+		this.port = prt;
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());
 
@@ -78,15 +82,15 @@ public class ClientLauncher extends JFrame implements ActionListener {
 		this.setVisible(true);
 		
 		redirectIO(textArea); 
-		connectTelnet();
+		connectTelnet(host, port);
 	}
 
-	public void connectTelnet() {
+	public void connectTelnet(String host, int port) {
 		
 		TelnetClient telnet = new TelnetClient();
 
 		try {
-			telnet.connect("localhost", 23);
+			telnet.connect(host, port);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -130,13 +134,13 @@ public class ClientLauncher extends JFrame implements ActionListener {
 	
 	public static void main(String[] args) {			
 		
-		ClientLauncher clientView = new ClientLauncher();		
+		if(args.length == 0){
+			ClientLauncher clientView = new ClientLauncher("localhost", 23);
+		}
+		else {
+			ClientLauncher clientView = new ClientLauncher(args[0], Integer.parseInt(args[1]));
+		}
 		
-		/*java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ClientLauncher();
-            }
-        });  */
    }
 }
 
